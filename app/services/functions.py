@@ -107,14 +107,12 @@ def notifier(message, tries=5, base_sleep=1):
 
 def create_futures_api_uri_v2(self, path: str) -> str:
         url = self.FUTURES_URL
-        print('Updated to v2')
         if self.testnet:
             url = self.FUTURES_TESTNET_URL
         return url + '/' + 'v2' + '/' + path
 
 
 def create_futures_api_uri_v1(self, path: str) -> str:
-        print('using v1')
         url = self.FUTURES_URL
         if self.testnet:
             url = self.FUTURES_TESTNET_URL
@@ -790,9 +788,6 @@ def get_over_all_trend(coin):
         trend = "Downtrend"
     else:
         trend = "Neutral"
-
-    print(f"Latest Rate of Change EMA: {latest_ROC_EMA:.2f}%")
-    print(f"Overall trend: {trend}")
     
     return trend
 

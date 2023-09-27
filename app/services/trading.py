@@ -14,7 +14,7 @@ from .functions import *
 
 
 
-from app.utils import custom_memoize
+from app.utils import custom_memoize,custom_memoize_get_coins
 
 @custom_memoize
 def execute_and_get_results(timeframe):
@@ -56,7 +56,7 @@ def execute_and_get_results(timeframe):
 
         final_list = list(final_list)
 
-    print(final_list)
+    
 
     strategies = ['volatile', 'long', 'short']
 
@@ -70,19 +70,19 @@ def execute_and_get_results(timeframe):
         coin_info = {
             'coin': entry['coin'],
             'stake': entry['stake'],
+            'signal' : entry['signal'],
             'time': entry['time']
         }
 
-        if strategy == 'volatile':
-            coin_info['signal'] = entry['signal']
 
         result.setdefault(timeframe, {}).setdefault(strategy, []).append(coin_info)
                 
-
+    result['time'] = datetime.utcnow()
     return result
 
 
-@cache.memoize(timeout=840)
+
+@custom_memoize_get_coins
 def get_coins_list():
     print('calling for the first time')
     data = get_scaner_data(sleep_time=3600)
@@ -258,7 +258,7 @@ def check_volatile(possible_volatile,timeframe,final_list):
                             'stake' : 1,
                             'timeframe' : timeframe,
                             'strategy' : 'volatile',
-                            'signal' : signal,
+                            'signal' : signal.lower(),
                             'time' : datetime.utcnow()
                         }
                     final_list.append(x)
@@ -284,10 +284,9 @@ def is_long_tradable(coin,timeframe):
     str_date = (datetime.now()- timedelta(days=look_back_days)).strftime('%b %d,%Y')
     end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
 
-    path = os.path.join("data", coin)
 
-    if not os.path.exists(path):
-        os.makedirs(path)
+
+
 
     if timeframe in ['45m','2h','4h']:
         #df = dataextract_bybit(coin,str_date,end_str,timeframe)   
@@ -378,10 +377,6 @@ def is_volatile_tradable(coin,timeframe):
     str_date = (datetime.now()- timedelta(days=look_back_days)).strftime('%b %d,%Y')
     end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
 
-    path = os.path.join("data", coin)
-
-    if not os.path.exists(path):
-        os.makedirs(path)
 
     if timeframe in ['1h','2h','4h']:
         #df = dataextract_bybit(coin,str_date,end_str,timeframe)  
@@ -471,11 +466,6 @@ def is_short_tradable(coin,timeframe):
     client=Client(config.api_key,config.secret_key)
     str_date = (datetime.now()- timedelta(days=look_back_days)).strftime('%b %d,%Y')
     end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
-
-    path = os.path.join("data", coin)
-
-    if not os.path.exists(path):
-        os.makedirs(path)
 
     if timeframe in ['1h','2h','4h']:
         #df = dataextract_bybit(coin,str_date,end_str,timeframe)  
