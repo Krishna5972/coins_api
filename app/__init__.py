@@ -3,9 +3,11 @@ from flask_caching import Cache
 import logging
 
 
-# Set up logging
+
+
 logging.basicConfig(filename='trading_data_log.txt', filemode='a', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 cache = Cache()
+
 def create_app():
     app = Flask(__name__)
 
