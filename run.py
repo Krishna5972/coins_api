@@ -75,4 +75,4 @@ if __name__ == '__main__':
     background_loop = asyncio.new_event_loop()
     t = threading.Thread(target=start_background_loop, args=(background_loop,), daemon=True)
     t.start()
-    app.run(debug=True,use_reloader=False)
+    app.run(host='0.0.0.0', port=5000,debug=True,use_reloader=False)
