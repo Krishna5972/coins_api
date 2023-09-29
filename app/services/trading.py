@@ -449,7 +449,6 @@ def is_volatile_tradable(coin,timeframe):
             data['coin'] = coin
             data['timeframe'] = timeframe 
             data['time'] = datetime.utcnow()
-            data['signal'] = 'buy'
             data['strategy'] = 'volatile'
             data['rr'] = ratio
             data['inverse_trades_count'] = inverse_trades
