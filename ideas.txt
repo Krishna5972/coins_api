@@ -5,3 +5,39 @@ from next two only 1hr
 
 
 highest negative funding opposite direct 1h
+
+
+
+utcnow
+
+0-2 5m and 15m 
+2-4 15m 
+4-8 30m 
+8 above only 1h
+
+if any signal at any other time, limit order at very far distance
+
+
+json should have :
+
+{
+                "coin": "1000LUNC",
+                "signal": "buy",
+                "stake": 1,
+                "time": "Wed, 27 Sep 2023 14:30:49 GMT",
+                "ema" : 'above'/'below
+                "rr" : int,
+                "inverse_trades_count" : int,
+                "long_term_prev_percentage" : float,
+                "short_term_prev_percentage" : float,
+                'long_candle_count" : int,
+                'prev_short_candle_count: : int,
+                "tp" : float,
+                "sl" :
+            }
+
+
+Current rules only one hour
+max : 300
+
+15m in first two hours 02:00 utcnow, then on only one hr
