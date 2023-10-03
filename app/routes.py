@@ -19,6 +19,19 @@ def one_hour():
     data = execute_and_get_results('1h')
     return jsonify(data)
 
+@trading_bp.route('/5m')
+def five_minutes():
+    data = execute_and_get_results('5m')
+    return jsonify(data)
+
+@trading_bp.route('/get_first_volatile/<int:n>')
+def get_first_volatile_coin(n):
+    coin = get_first_volatile_coin(n)
+    data = {
+        'coin' : coin,
+        'time' : datetime.utcnow()
+    }
+    return jsonify(data)
 
 @trading_bp.route('/get_coins_list')
 def get_coins_list_endpoint():

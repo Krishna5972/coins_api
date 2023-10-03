@@ -14,7 +14,7 @@ from .functions import *
 
 
 
-from app.utils import custom_memoize,custom_memoize_get_coins
+from app.utils import *
 
 @custom_memoize
 def execute_and_get_results(timeframe):
@@ -31,7 +31,12 @@ def execute_and_get_results(timeframe):
     with Manager() as manager:
         final_list = manager.list()
 
-        if timeframe == '15m':
+        if timeframe == '5m':
+            processes = [
+            Process(target=check_volatile, args=(volatile1[:10], timeframe, final_list)),
+        ]
+
+        elif timeframe == '15m':
             processes = [
             Process(target=check_volatile, args=(volatile1, timeframe, final_list)),
             Process(target=check_volatile, args=(volatile2, timeframe, final_list))
@@ -103,7 +108,8 @@ def get_coins_list():
     return possible_long, possible_short, possible_volatile
 
 
-def get_scaner_data(sleep_time=3600):
+@memoize_get_screener_data
+def get_scaner_data(sleep_time=3600,first_volatile = 0):
     url = "https://scanner.tradingview.com/crypto/scan"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36",
@@ -157,12 +163,33 @@ def get_scaner_data(sleep_time=3600):
                 data = response.json()
                 logging.info("Data fetched successfully")
                 return data
-                time.sleep(sleep_time)
             else:
                 logging.error(f"Error {response.status_code}: {response.text}")
         except requests.RequestException as e:
             logging.error(f"Request failed: {e}")
 
+def get_coins_funding():
+    FUNDING_RATE_LIMIT = -0.0001
+    url = 'https://www.binance.com/fapi/v1/premiumIndex'
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+    except requests.exceptions.ConnectionError as e:
+        print(f"Error: Unable to connect to the specified URL. {e}")
+    df = pd.DataFrame(data)
+    df['lastFundingRate']=df['lastFundingRate'].astype(float)
+    df = df.sort_values(by='lastFundingRate')
+    df= df[df['lastFundingRate']<=FUNDING_RATE_LIMIT]
+    coin = None
+    funding_rate = None
+    if df.shape[0] > 0:
+        coins = list(df['symbol'])
+        coins = [x.split('USDT')[0] for x in coins]
+        return [],[],coins
+    return [],[],[]
 
 def get_coins(data):
     coins = []
@@ -208,7 +235,59 @@ def get_coins(data):
     return possible_long,possible_short,possible_volatile
 
 
+def get_volatile_df(data):
+    coins = []
+    daily_volatilites = []
+    monthly_volatilites = []
+    weekly_volatilites = []
+    highs = []
+    lows = []
+    opens = []
+    for i in data['data']:
+        coin = i['d'][2].split('.')[0]
+        daily_volatility = i['d'][4]
+        monthly_volatility = i['d'][5]
+        weekly_volatility = i['d'][6]
+        high = i['d'][9]
+        low = i['d'][10]
+        open_ = i['d'][11]
+        coins.append(coin)
+        daily_volatilites.append(daily_volatility)
+        monthly_volatilites.append(monthly_volatility)
+        weekly_volatilites.append(weekly_volatility)
+        highs.append(high)
+        lows.append(low)
+        opens.append(open_)
+    df_vol = pd.DataFrame(zip(coins,daily_volatilites,monthly_volatilites,weekly_volatilites,highs,lows,opens),columns=['coin', 'volatility_d','volatility_m','volatility_w','high','low','open'])
+    df_vol['time'] = datetime.now()
+    df_vol['coin'] = df_vol['coin'].str.split('USDT').str[0]
+    df_vol['max_perc'] = (df_vol['high'] - df_vol['open'])/df_vol['open']
+    df_vol['low_perc'] = -((df_vol['open'] - df_vol['low'])/df_vol['open'])
 
+
+    volatility_df = df_vol.sort_values(by='volatility_d',ascending = False)
+
+    return volatility_df
+    
+    
+    
+ 
+   
+
+@custom_memoize_first_volatile
+def get_first_volatile_coin(perc):
+    while True:
+        current_hour = datetime.utcnow().hour
+        if current_hour < 20:
+            data = get_scaner_data(sleep_time=3600,first_volatile = 1)
+            volatility_df = get_volatile_df(data)
+            volatility_df = volatility_df[volatility_df['volatility_d']>perc]
+            if volatility_df.shape[0] > 0:
+                coin = list(volatility_df['coin'])[0]
+                return coin
+            time.sleep(1)
+
+        
 
 def check_longs(possible_long,timeframe,final_list):
     for coin in possible_long:
@@ -349,7 +428,7 @@ def is_volatile_tradable(coin,timeframe):
     
     data = {}
     timeframe_mapping = {
-     '5m': (2, 30),
+     '5m': (2, 15),
     '15m': (3, 15),
     '30m': (7, 9),
     '45m': (10, 6),  # Example values; adjust as needed
