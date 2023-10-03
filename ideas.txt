@@ -33,7 +33,17 @@ json should have :
                 'long_candle_count" : int,
                 'prev_short_candle_count: : int,
                 "tp" : float,
-                "sl" :
+                "sl" :,
+
+                #new
+                fundingfee : float,
+                openInterest : List<float> int,
+                NotionalValue : List<float> int,
+                Top Trader Long/Short Accounts : float,
+                Top Trader Long/Short positions : float,
+                Long short ratio : ,
+                
+            
             }
 
 
